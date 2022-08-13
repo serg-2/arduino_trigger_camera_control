@@ -7,11 +7,12 @@ const int VIDEO_PIN = 1;    // video trigger pin
 const int FOTO_PIN = 2;     // foto trigger pin
 const int PWM_PIN = 7;      // PWM input pin
 
-const int FOTO_VALUE = 1800;
-const int VIDEO_VALUE = 1900;
+const int foto_values[] = { 1300, 1350, 1400, 1500, 1550, 1600 };
+const int video_values[] = { 1300, 1350, 1400, 1700, 1750, 1800 };
+
+const int HALF_MIN_AUX_STEP = 25;
 
 const int DOWNLEVEL_VALUE = 200; // Default time for timeout for triggering
-const int PAUSE_VALUE = 1000; // Pause between commands
 
 // Function for triggering pin
 void trigger_pin(int pin) {
@@ -20,7 +21,6 @@ void trigger_pin(int pin) {
   delay(DOWNLEVEL_VALUE);
   digitalWrite(pin, HIGH);
   digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
-  delay(PAUSE_VALUE);
 }
 
 // the setup function runs once when you press reset or power the board
@@ -44,15 +44,23 @@ void loop() {
   // Read Pulse
   int value = pulseIn(PWM_PIN, HIGH);
 
-  if(value > 0 && value < 2000)  {
-    if (value > VIDEO_VALUE - 50 && value < VIDEO_VALUE + 50) {
-      // Serial.println("VIDEO Triggered");
-      trigger_pin(VIDEO_PIN);
-    } else if (value > FOTO_VALUE - 50 && value < FOTO_VALUE + 50) {
-      // Serial.println("FOTO Triggered");
-      trigger_pin(FOTO_PIN);
+  if (value > 0 && value < 2000)  {
+    // Check Video array
+    for (int i = 0; i < sizeof(video_values) / sizeof(int); i++) {
+      if (value > video_values[i] - HALF_MIN_AUX_STEP && value < video_values[i] + HALF_MIN_AUX_STEP) {
+        // Serial.println("VIDEO Triggered");
+        trigger_pin(VIDEO_PIN);
+      }
+    }
+
+    // Check Foto array
+    for (int i = 0; i < sizeof(foto_values) / sizeof(int); i++) {
+      if (value > foto_values[i] - HALF_MIN_AUX_STEP && value < foto_values[i] + HALF_MIN_AUX_STEP) {
+        // Serial.println("FOTO Triggered");
+        trigger_pin(FOTO_PIN);
+      }
     }
   }
-  // 50 Hz
-  delay(20);
+  // 10 Hz
+  delay(100);
 }
